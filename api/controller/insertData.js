@@ -13,7 +13,7 @@ const insertData = async (req, res) => {
 
     const filepath = path.resolve(
       __dirname,
-      `../vendors/${vendor_name}/products.xlsx`
+      `../vendors/${vendor_name}/products.xlsx`,
     );
 
     if (!fs.existsSync(filepath)) {
@@ -34,11 +34,11 @@ const insertData = async (req, res) => {
 
     for (const row of sheet) {
       const [existingProduct] = await sequelize.query(
-        `SELECT * FROM Products WHERE name = :name`,
+        `SELECT * FROM products WHERE name = :name`,
         {
           replacements: { name: row.name },
           type: QueryTypes.SELECT,
-        }
+        },
       );
 
       if (!existingProduct) {
@@ -52,12 +52,12 @@ const insertData = async (req, res) => {
                 quantity: row.quantity,
               },
               type: QueryTypes.INSERT,
-            }
+            },
           )
           .then(() => {
             total_inserted = total_inserted + 1;
             res.write(
-              `data: ${JSON.stringify({ message: "Inserted", data: row })}\n\n`
+              `data: ${JSON.stringify({ message: "Inserted", data: row })}\n\n`,
             );
           });
       } else {
@@ -75,19 +75,22 @@ const insertData = async (req, res) => {
                   id: existingProduct.id,
                 },
                 type: QueryTypes.UPDATE,
-              }
+              },
             )
             .then(() => {
               total_updated = total_updated + 1;
               res.write(
-                `data: ${JSON.stringify({ message: "Updated", data: row })}\n\n`
+                `data: ${JSON.stringify({
+                  message: "Updated",
+                  data: row,
+                })}\n\n`,
               );
             });
         } else {
           total_skipped = total_skipped + 1;
 
           res.write(
-            `data: ${JSON.stringify({ message: "Skipped", data: row })}\n\n`
+            `data: ${JSON.stringify({ message: "Skipped", data: row })}\n\n`,
           );
         }
       }
@@ -105,7 +108,7 @@ const insertData = async (req, res) => {
           total_skipped,
         ],
         type: QueryTypes.INSERT,
-      }
+      },
     );
 
     res.end();

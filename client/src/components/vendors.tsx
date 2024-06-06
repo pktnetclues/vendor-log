@@ -11,16 +11,28 @@ import {
   ListItemText,
   Button,
   ListItemIcon,
+  Card,
+  CardContent,
+  Typography,
 } from "@mui/material";
 import React, { useEffect, useRef, useState } from "react";
 import DoneIcon from "@mui/icons-material/Done";
 import EditIcon from "@mui/icons-material/Edit";
 import DirectionsRunIcon from "@mui/icons-material/DirectionsRun";
+import Status from "./Status";
+import { logMessage } from "../types";
 
 const Vendors = () => {
   const [vendors, setVendors] = useState<Array<string>>([]);
   const [selectedVendor, setSelectedVendor] = useState<string>("");
-  const [liveLogs, setLiveLogs] = useState<Array<logMessage>>([]);
+  const [vendorLogs, setVendorLogs] = useState<
+    Record<string, Array<logMessage>>
+  >({});
+  const [ongoingProcesses, setOngoingProcesses] = useState<Array<string>>([]);
+  const [visibleVendorLogs, setVisibleVendorLogs] = useState<string | null>(
+    null,
+  );
+  const eventSourcesRef = useRef<Record<string, EventSource>>({});
 
   useEffect(() => {
     getVendors();
@@ -39,27 +51,34 @@ const Vendors = () => {
 
   const startLiveLogging = async (
     e: React.FormEvent<HTMLFormElement>,
-    vendorName: string
+    vendorName: string,
   ) => {
     e.preventDefault();
+
+    if (eventSourcesRef.current[vendorName]) {
+      console.log(`Logging already started for vendor ${vendorName}`);
+      return;
+    }
+
     try {
       const eventSource = new EventSource(
-        `http://localhost:4000/insert/${vendorName}`
+        `http://localhost:4000/insert/${vendorName}`,
       );
+      eventSourcesRef.current[vendorName] = eventSource;
+      setOngoingProcesses((prev) => [...prev, vendorName]);
+
       eventSource.onmessage = (event) => {
         const newLog = JSON.parse(event.data);
-        setLiveLogs((prevLogs) => [...prevLogs, newLog]);
-        setSelectedVendor("");
+        setVendorLogs((prevLogs) => ({
+          ...prevLogs,
+          [vendorName]: [...(prevLogs[vendorName] || []), newLog],
+        }));
       };
-
-      if (eventSource.readyState === EventSource.CLOSED) {
-        setLiveLogs([]);
-        setSelectedVendor("");
-      }
 
       eventSource.onerror = (error) => {
         console.error("EventSource error:", error);
         eventSource.close();
+        delete eventSourcesRef.current[vendorName];
       };
     } catch (error) {
       console.log("Error:", error);
@@ -70,47 +89,37 @@ const Vendors = () => {
     setSelectedVendor(e.target.value);
   };
 
-  //Scroll to bottom of chat
-  //   const logRef = useRef(null);
-  //   const scrollToBottom = () => {
-  //     logRef.current.scrollIntoView({ behaviour: "smooth" });
-  //   };
-
-  //   useEffect(() => {
-  //     scrollToBottom();
-  //   }, [liveLogs]);
+  const toggleVendorLogsVisibility = (vendorName: string) => {
+    setVisibleVendorLogs((prev) => (prev === vendorName ? null : vendorName));
+  };
 
   return (
     <Container
       sx={{
         display: "flex",
-        gap: "50px",
-        margin: "auto",
+        flexDirection: "column",
         alignItems: "center",
         minHeight: "100vh",
-      }}
-    >
+        padding: "20px",
+      }}>
       <Box
         sx={{
           display: "flex",
           flexDirection: "column",
-          gap: "50px",
-        }}
-      >
+          gap: "20px",
+          width: "600px",
+        }}>
         <form onSubmit={(e) => startLiveLogging(e, selectedVendor)}>
-          <Box sx={{ width: "500px", display: "flex", gap: 2 }}>
-            <FormControl sx={{ width: "300px" }}>
-              <InputLabel size="normal" id="vendor-label">
-                Select Vendor
-              </InputLabel>
+          <Box sx={{ display: "flex", gap: 2 }}>
+            <FormControl fullWidth>
+              <InputLabel id="vendor-label">Select Vendor</InputLabel>
               <Select
                 labelId="vendor-label"
                 id="vendor"
                 value={selectedVendor}
                 label="Vendor"
                 onChange={onVendorChange}
-                size="medium"
-              >
+                size="medium">
                 {vendors.map((vendor, index) => (
                   <MenuItem key={index} value={vendor}>
                     {vendor}
@@ -118,97 +127,86 @@ const Vendors = () => {
                 ))}
               </Select>
             </FormControl>
-            <Button type="submit" variant="outlined">
+            <Button type="submit" variant="contained" color="primary">
               Start Insertion
             </Button>
           </Box>
         </form>
-        {liveLogs.length > 0 && (
+
+        {ongoingProcesses.map((vendor) => (
           <Box
             sx={{
-              flex: 1,
-              overflowY: "auto",
-              maxHeight: "50vh",
-              width: "500px",
               display: "flex",
               flexDirection: "column",
-              padding: 1,
-            }}
-          >
-            <h2>Live Logs:</h2>
-            <List>
-              {liveLogs.map((log) => {
-                if (log.message === "Updated") {
-                  return (
-                    <ListItem
-                      sx={{
-                        backgroundColor: "#FFD0D0",
-                      }}
-                      key={log?.data.id}
-                    >
-                      <ListItemIcon>
-                        <EditIcon />
-                      </ListItemIcon>
-                      <ListItemText>
-                        Product {log.data.name} with Row Id: {log.data.id}:
-                        price:
-                        {log.data.price} and Quantity: {log.data.quantity}:
-                        Updated
-                      </ListItemText>
-                    </ListItem>
-                  );
-                } else if (log.message === "Skipped") {
-                  return (
-                    <ListItem
-                      sx={{
-                        backgroundColor: "#9AC8CD",
-                      }}
-                      key={log?.data.id}
-                    >
-                      <ListItemIcon>
-                        <DirectionsRunIcon />
-                      </ListItemIcon>
-                      <ListItemText>
-                        Product {log.data.name} with Row Id: {log.data.id}:
-                        price:
-                        {log.data.price} and Quantity: {log.data.quantity}:
-                        Skipped
-                      </ListItemText>
-                    </ListItem>
-                  );
-                } else {
-                  return (
-                    <ListItem key={log?.data.id}>
-                      <ListItemIcon>
-                        <DoneIcon />
-                      </ListItemIcon>
-                      <ListItemText>
-                        Product {log.data.name} with Row Id: {log.data.id}:
-                        price:
-                        {log.data.price} and Quantity: {log.data.quantity}:
-                        Inserted
-                      </ListItemText>
-                    </ListItem>
-                  );
-                }
-              })}
-            </List>
-            {/* <div ref={logRef} /> */}
+              gap: "20px",
+              width: "600px",
+              padding: "20px",
+              border: "1px solid #ccc",
+              borderRadius: "8px",
+            }}>
+            <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+              <Typography variant="h6">{vendor}</Typography>
+              <Button
+                variant="text"
+                onClick={() => toggleVendorLogsVisibility(vendor)}>
+                {visibleVendorLogs === vendor ? "Hide Log" : "View Log"}
+              </Button>
+            </Box>
+            {visibleVendorLogs === vendor && (
+              <Box
+                sx={{
+                  overflowY: "auto",
+                  maxHeight: "50vh",
+                  width: "100%",
+                  display: "flex",
+                  flexDirection: "column",
+                  padding: 1,
+                }}>
+                <List>
+                  {vendorLogs[vendor]?.map((log) => {
+                    const logColor =
+                      log.message === "Updated"
+                        ? "#FFD0D0"
+                        : log.message === "Skipped"
+                        ? "#9AC8CD"
+                        : "#D9EAD3";
+
+                    return (
+                      <ListItem
+                        sx={{
+                          backgroundColor: logColor,
+                          borderRadius: "4px",
+                          marginBottom: "4px",
+                          display: "flex",
+                          alignItems: "center",
+                        }}
+                        key={log?.data.id}>
+                        <ListItemIcon>
+                          {log.message === "Updated" ? (
+                            <EditIcon />
+                          ) : log.message === "Skipped" ? (
+                            <DirectionsRunIcon />
+                          ) : (
+                            <DoneIcon />
+                          )}
+                        </ListItemIcon>
+                        <ListItemText>
+                          {log.data.name} (ID: {log.data.id}) - Price:{" "}
+                          {log.data.price}, Quantity: {log.data.quantity} -{" "}
+                          {log.message}
+                        </ListItemText>
+                      </ListItem>
+                    );
+                  })}
+                </List>
+              </Box>
+            )}
           </Box>
-        )}
+        ))}
       </Box>
+      <Status />
     </Container>
   );
 };
-
-interface logMessage {
-  message: string;
-  data: {
-    id: number;
-    name: string;
-    price: number;
-    quantity: number;
-  };
-}
 
 export default Vendors;

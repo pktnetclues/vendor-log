@@ -1,0 +1,35 @@
+export const styles = {
+  container: { padding: "20px", backgroundColor: "#f5f5f5" },
+  successTitle: { color: "#008000", marginBottom: "20px" },
+  errorTitle: { color: "#ff0000", marginTop: "30px", marginBottom: "20px" },
+  list: {
+    flex: 1,
+    overflowY: "auto",
+    maxHeight: "50vh",
+    width: "100%",
+    display: "flex",
+    flexDirection: "column",
+    padding: 1,
+    marginTop: "10px",
+    border: "1px solid #ccc",
+    borderRadius: "5px",
+    backgroundColor: "#fff",
+  },
+  listItem: {
+    textDecoration: "none",
+    color: "inherit",
+    "&:hover": {
+      backgroundColor: "#f0f0f0",
+    },
+    padding: "10px",
+    borderBottom: "1px solid #ccc",
+  },
+  errorList: {
+    listStyleType: "none",
+    padding: "0",
+    backgroundColor: "#fff",
+    borderRadius: "5px",
+    border: "1px solid #ccc",
+  },
+  errorListItem: { padding: "10px", borderBottom: "1px solid #ccc" },
+};
