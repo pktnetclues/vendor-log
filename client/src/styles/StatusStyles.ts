@@ -1,11 +1,16 @@
 export const styles = {
-  container: { padding: "20px", backgroundColor: "#f5f5f5" },
-  successTitle: { color: "#008000", marginBottom: "20px" },
+  container: {
+    padding: "10px",
+    backgroundColor: "#f5f5f5",
+    // margin: "20px 0",
+    width: "500px",
+  },
+  successTitle: { color: "#008000", marginBottom: "10px", fontSize: "20px" },
   errorTitle: { color: "#ff0000", marginTop: "30px", marginBottom: "20px" },
   list: {
     flex: 1,
     overflowY: "auto",
-    maxHeight: "50vh",
+    maxHeight: "40vh",
     width: "100%",
     display: "flex",
     flexDirection: "column",
@@ -24,12 +29,4 @@ export const styles = {
     padding: "10px",
     borderBottom: "1px solid #ccc",
   },
-  errorList: {
-    listStyleType: "none",
-    padding: "0",
-    backgroundColor: "#fff",
-    borderRadius: "5px",
-    border: "1px solid #ccc",
-  },
-  errorListItem: { padding: "10px", borderBottom: "1px solid #ccc" },
 };

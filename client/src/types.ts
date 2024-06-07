@@ -23,4 +23,4 @@ interface ProcesssResponse {
   FailedLogs: ProcesssType[];
 }
 
-export { ProcesssType, logMessage, ProcesssResponse };
+export type { ProcesssType, logMessage, ProcesssResponse };

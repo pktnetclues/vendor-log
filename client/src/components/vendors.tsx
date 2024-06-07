@@ -11,8 +11,6 @@ import {
   ListItemText,
   Button,
   ListItemIcon,
-  Card,
-  CardContent,
   Typography,
 } from "@mui/material";
 import React, { useEffect, useRef, useState } from "react";
@@ -21,6 +19,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import DirectionsRunIcon from "@mui/icons-material/DirectionsRun";
 import Status from "./Status";
 import { logMessage } from "../types";
+import { toast } from "sonner";
 
 const Vendors = () => {
   const [vendors, setVendors] = useState<Array<string>>([]);
@@ -30,7 +29,7 @@ const Vendors = () => {
   >({});
   const [ongoingProcesses, setOngoingProcesses] = useState<Array<string>>([]);
   const [visibleVendorLogs, setVisibleVendorLogs] = useState<string | null>(
-    null,
+    null
   );
   const eventSourcesRef = useRef<Record<string, EventSource>>({});
 
@@ -51,18 +50,16 @@ const Vendors = () => {
 
   const startLiveLogging = async (
     e: React.FormEvent<HTMLFormElement>,
-    vendorName: string,
+    vendorName: string
   ) => {
     e.preventDefault();
-
     if (eventSourcesRef.current[vendorName]) {
-      console.log(`Logging already started for vendor ${vendorName}`);
-      return;
+      return toast.message(`Process already going on for ${vendorName}`);
     }
 
     try {
       const eventSource = new EventSource(
-        `http://localhost:4000/insert/${vendorName}`,
+        `http://localhost:4000/insert/${vendorName}`
       );
       eventSourcesRef.current[vendorName] = eventSource;
       setOngoingProcesses((prev) => [...prev, vendorName]);
@@ -79,14 +76,11 @@ const Vendors = () => {
         console.error("EventSource error:", error);
         eventSource.close();
         delete eventSourcesRef.current[vendorName];
+        toast.success(`Process Completed for ${vendorName}`);
       };
     } catch (error) {
       console.log("Error:", error);
     }
-  };
-
-  const onVendorChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedVendor(e.target.value);
   };
 
   const toggleVendorLogsVisibility = (vendorName: string) => {
@@ -97,29 +91,34 @@ const Vendors = () => {
     <Container
       sx={{
         display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        minHeight: "100vh",
+        flexDirection: "row",
+        maxHeight: "90vh",
         padding: "20px",
-      }}>
+        gap: "30px",
+      }}
+    >
       <Box
         sx={{
           display: "flex",
           flexDirection: "column",
           gap: "20px",
-          width: "600px",
-        }}>
+          width: "500px",
+        }}
+      >
         <form onSubmit={(e) => startLiveLogging(e, selectedVendor)}>
           <Box sx={{ display: "flex", gap: 2 }}>
             <FormControl fullWidth>
-              <InputLabel id="vendor-label">Select Vendor</InputLabel>
+              <InputLabel id="vendor-label">Select</InputLabel>
               <Select
                 labelId="vendor-label"
                 id="vendor"
                 value={selectedVendor}
                 label="Vendor"
-                onChange={onVendorChange}
-                size="medium">
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                  setSelectedVendor(e.target.value)
+                }
+                size="medium"
+              >
                 {vendors.map((vendor, index) => (
                   <MenuItem key={index} value={vendor}>
                     {vendor}
@@ -127,7 +126,15 @@ const Vendors = () => {
                 ))}
               </Select>
             </FormControl>
-            <Button type="submit" variant="contained" color="primary">
+            <Button
+              sx={{
+                width: "250px",
+              }}
+              type="submit"
+              variant="contained"
+              color="primary"
+              disabled={selectedVendor.length === 0}
+            >
               Start Insertion
             </Button>
           </Box>
@@ -139,16 +146,18 @@ const Vendors = () => {
               display: "flex",
               flexDirection: "column",
               gap: "20px",
-              width: "600px",
+              width: "500px",
               padding: "20px",
               border: "1px solid #ccc",
               borderRadius: "8px",
-            }}>
+            }}
+          >
             <Box sx={{ display: "flex", justifyContent: "space-between" }}>
               <Typography variant="h6">{vendor}</Typography>
               <Button
                 variant="text"
-                onClick={() => toggleVendorLogsVisibility(vendor)}>
+                onClick={() => toggleVendorLogsVisibility(vendor)}
+              >
                 {visibleVendorLogs === vendor ? "Hide Log" : "View Log"}
               </Button>
             </Box>
@@ -161,7 +170,8 @@ const Vendors = () => {
                   display: "flex",
                   flexDirection: "column",
                   padding: 1,
-                }}>
+                }}
+              >
                 <List>
                   {vendorLogs[vendor]?.map((log) => {
                     const logColor =
@@ -175,12 +185,11 @@ const Vendors = () => {
                       <ListItem
                         sx={{
                           backgroundColor: logColor,
-                          borderRadius: "4px",
-                          marginBottom: "4px",
                           display: "flex",
                           alignItems: "center",
                         }}
-                        key={log?.data.id}>
+                        key={log?.data.id}
+                      >
                         <ListItemIcon>
                           {log.message === "Updated" ? (
                             <EditIcon />

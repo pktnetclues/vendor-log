@@ -13,10 +13,23 @@ const insertData = async (req, res) => {
 
     const filepath = path.resolve(
       __dirname,
-      `../vendors/${vendor_name}/products.xlsx`,
+      `../vendors/${vendor_name}/products.xlsx`
     );
 
     if (!fs.existsSync(filepath)) {
+      await sequelize.query(
+        `INSERT INTO process_status (vendor_name, status, total_inserted, total_updated, total_skipped) VALUES (?,?,?,?,?)`,
+        {
+          replacements: [
+            vendor_name,
+            "failed",
+            total_inserted,
+            total_updated,
+            total_skipped,
+          ],
+          type: QueryTypes.INSERT,
+        }
+      );
       return res.status(400).json({ message: "product file does not exist" });
     }
 
@@ -25,6 +38,19 @@ const insertData = async (req, res) => {
     const sheet = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName]);
 
     if (sheet.length === 0) {
+      await sequelize.query(
+        `INSERT INTO process_status (vendor_name, status, total_inserted, total_updated, total_skipped) VALUES (?,?,?,?,?)`,
+        {
+          replacements: [
+            vendor_name,
+            "failed",
+            total_inserted,
+            total_updated,
+            total_skipped,
+          ],
+          type: QueryTypes.INSERT,
+        }
+      );
       return res.status(404).json({ message: "no products found in file" });
     }
 
@@ -38,7 +64,7 @@ const insertData = async (req, res) => {
         {
           replacements: { name: row.name },
           type: QueryTypes.SELECT,
-        },
+        }
       );
 
       if (!existingProduct) {
@@ -52,18 +78,18 @@ const insertData = async (req, res) => {
                 quantity: row.quantity,
               },
               type: QueryTypes.INSERT,
-            },
+            }
           )
           .then(() => {
             total_inserted = total_inserted + 1;
             res.write(
-              `data: ${JSON.stringify({ message: "Inserted", data: row })}\n\n`,
+              `data: ${JSON.stringify({ message: "Inserted", data: row })}\n\n`
             );
           });
       } else {
         if (
-          existingProduct.price !== row.price ||
-          existingProduct.quantity !== row.quantity
+          existingProduct.price != row.price ||
+          existingProduct.quantity != row.quantity
         ) {
           await sequelize
             .query(
@@ -75,7 +101,7 @@ const insertData = async (req, res) => {
                   id: existingProduct.id,
                 },
                 type: QueryTypes.UPDATE,
-              },
+              }
             )
             .then(() => {
               total_updated = total_updated + 1;
@@ -83,14 +109,14 @@ const insertData = async (req, res) => {
                 `data: ${JSON.stringify({
                   message: "Updated",
                   data: row,
-                })}\n\n`,
+                })}\n\n`
               );
             });
         } else {
           total_skipped = total_skipped + 1;
 
           res.write(
-            `data: ${JSON.stringify({ message: "Skipped", data: row })}\n\n`,
+            `data: ${JSON.stringify({ message: "Skipped", data: row })}\n\n`
           );
         }
       }
@@ -108,11 +134,24 @@ const insertData = async (req, res) => {
           total_skipped,
         ],
         type: QueryTypes.INSERT,
-      },
+      }
     );
 
     res.end();
   } catch (error) {
+    await sequelize.query(
+      `INSERT INTO process_status (vendor_name, status, total_inserted, total_updated, total_skipped) VALUES (?,?,?,?,?)`,
+      {
+        replacements: [
+          vendor_name,
+          "failed",
+          total_inserted,
+          total_updated,
+          total_skipped,
+        ],
+        type: QueryTypes.INSERT,
+      }
+    );
     console.error("Error:", error);
     res.status(500).json({ message: "Internal server error" });
   }
