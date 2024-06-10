@@ -1,35 +1,26 @@
-import axios, { AxiosResponse } from "axios";
 import { useEffect, useState } from "react";
-import { ProcesssResponse, ProcesssType } from "../types";
+import { ProcesssType } from "../types";
 import { List, ListItem, ListItemText } from "@mui/material";
 import { TimeAgo } from "../utils/TimeAgo";
 import { styles } from "../styles/StatusStyles";
+import { getProcesss } from "../utils/GetStatus";
 
 const Status = () => {
   const [successProcesss, setSuccessProcesss] = useState<ProcesssType[]>([]);
   const [errorProcesss, setErrorProcesss] = useState<ProcesssType[]>([]);
 
   useEffect(() => {
-    getProcesss();
+    getProcessResponse()
   }, []);
 
-  const getProcesss = async () => {
-    try {
-      const response: AxiosResponse<ProcesssResponse> = await axios.get(
-        "http://localhost:4000/getstatus"
-      );
-
-      if (response.status === 200) {
-        const { SuccessLogs, FailedLogs } = response.data;
-        setSuccessProcesss(SuccessLogs);
-        setErrorProcesss(FailedLogs);
-      }
-    } catch (error) {
-      console.error(error);
-    }
-  };
+  const getProcessResponse = async () => {
+    const data = await getProcesss()
+    setSuccessProcesss(data?.SuccessLogs ?? successProcesss)
+    setErrorProcesss(data?.FailedLogs ?? errorProcesss)
+  }
 
   return (
+
     <div style={styles.container}>
       <h3 style={styles.successTitle}>Success Processes</h3>
       <List sx={styles.list}>
@@ -84,5 +75,6 @@ const Status = () => {
     </div>
   );
 };
+
 
 export default Status;

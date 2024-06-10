@@ -20,8 +20,11 @@ import DirectionsRunIcon from "@mui/icons-material/DirectionsRun";
 import Status from "./Status";
 import { logMessage } from "../types";
 import { toast } from "sonner";
+import { v4 as uuid } from "uuid";
+
 
 const Vendors = () => {
+  const uniqueId: string = uuid().slice(0, 3)
   const [vendors, setVendors] = useState<Array<string>>([]);
   const [selectedVendor, setSelectedVendor] = useState<string>("");
   const [vendorLogs, setVendorLogs] = useState<
@@ -61,16 +64,21 @@ const Vendors = () => {
       const eventSource = new EventSource(
         `http://localhost:4000/insert/${vendorName}`
       );
-      eventSourcesRef.current[vendorName] = eventSource;
-      setOngoingProcesses((prev) => [...prev, vendorName]);
+
+      eventSource.onopen = () => {
+        eventSourcesRef.current[vendorName] = eventSource;
+        setOngoingProcesses((prev) => [...prev, `${uniqueId}-${vendorName}`]);
+        toast.success(`Process Started for ${vendorName}`)
+      }
 
       eventSource.onmessage = (event) => {
         const newLog = JSON.parse(event.data);
+
         setVendorLogs((prevLogs) => ({
           ...prevLogs,
-          [vendorName]: [...(prevLogs[vendorName] || []), newLog],
+          [`${uniqueId}-${vendorName}`]: [...(prevLogs[`${uniqueId}-${vendorName}`] || []), newLog],
         }));
-      };
+      }
 
       eventSource.onerror = (error) => {
         console.error("EventSource error:", error);
@@ -78,6 +86,9 @@ const Vendors = () => {
         delete eventSourcesRef.current[vendorName];
         toast.success(`Process Completed for ${vendorName}`);
       };
+
+
+
     } catch (error) {
       console.log("Error:", error);
     }
@@ -86,6 +97,7 @@ const Vendors = () => {
   const toggleVendorLogsVisibility = (vendorName: string) => {
     setVisibleVendorLogs((prev) => (prev === vendorName ? null : vendorName));
   };
+
 
   return (
     <Container
@@ -102,7 +114,7 @@ const Vendors = () => {
           display: "flex",
           flexDirection: "column",
           gap: "20px",
-          width: "500px",
+          width: "550px",
         }}
       >
         <form onSubmit={(e) => startLiveLogging(e, selectedVendor)}>
@@ -140,78 +152,83 @@ const Vendors = () => {
           </Box>
         </form>
 
-        {ongoingProcesses.map((vendor) => (
-          <Box
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-              gap: "20px",
-              width: "500px",
-              padding: "20px",
-              border: "1px solid #ccc",
-              borderRadius: "8px",
-            }}
-          >
-            <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-              <Typography variant="h6">{vendor}</Typography>
-              <Button
-                variant="text"
-                onClick={() => toggleVendorLogsVisibility(vendor)}
-              >
-                {visibleVendorLogs === vendor ? "Hide Log" : "View Log"}
-              </Button>
-            </Box>
-            {visibleVendorLogs === vendor && (
-              <Box
-                sx={{
-                  overflowY: "auto",
-                  maxHeight: "50vh",
-                  width: "100%",
-                  display: "flex",
-                  flexDirection: "column",
-                  padding: 1,
-                }}
-              >
-                <List>
-                  {vendorLogs[vendor]?.map((log) => {
-                    const logColor =
-                      log.message === "Updated"
-                        ? "#FFD0D0"
-                        : log.message === "Skipped"
-                        ? "#9AC8CD"
-                        : "#D9EAD3";
-
-                    return (
-                      <ListItem
-                        sx={{
-                          backgroundColor: logColor,
-                          display: "flex",
-                          alignItems: "center",
-                        }}
-                        key={log?.data.id}
-                      >
-                        <ListItemIcon>
-                          {log.message === "Updated" ? (
-                            <EditIcon />
-                          ) : log.message === "Skipped" ? (
-                            <DirectionsRunIcon />
-                          ) : (
-                            <DoneIcon />
-                          )}
-                        </ListItemIcon>
-                        <ListItemText>
-                          {log.data.name} (ID: {log.data.id}) - Price:{" "}
-                          {log.data.price}, Quantity: {log.data.quantity} -{" "}
-                          {log.message}
-                        </ListItemText>
-                      </ListItem>
-                    );
-                  })}
-                </List>
+        {
+          ongoingProcesses.length > 0 ? ongoingProcesses.map((vendor, index: number) => (
+            <Box
+              key={index}
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "5px",
+                width: "550px",
+                padding: "10px",
+                border: "1px solid #ccc",
+                borderRadius: "5px",
+              }}
+            >
+              <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                <Typography variant="h6">{vendor}</Typography>
+                <Button
+                  variant="text"
+                  onClick={() => toggleVendorLogsVisibility(vendor)}
+                >
+                  {visibleVendorLogs === vendor ? "Hide Log" : "View Log"}
+                </Button>
               </Box>
-            )}
-          </Box>
-        ))}
+              {visibleVendorLogs === vendor && (
+                <Box
+                  sx={{
+                    overflowY: "auto",
+                    maxHeight: "40vh",
+                    width: "100%",
+                    display: "flex",
+                    flexDirection: "column",
+                    padding: 1,
+                  }}
+                >
+                  <List>
+                    {vendorLogs[vendor]?.map((log) => {
+                      const logColor =
+                        log.message === "Updated"
+                          ? "#FFD0D0"
+                          : log.message === "Skipped"
+                            ? "#9AC8CD"
+                            : "#D9EAD3";
+
+                      return (
+                        <ListItem
+                          sx={{
+                            backgroundColor: logColor,
+                            display: "flex",
+                            alignItems: "center",
+                          }}
+                          key={log?.data.id}
+                        >
+                          <ListItemIcon>
+                            {log.message === "Updated" ? (
+                              <EditIcon />
+                            ) : log.message === "Skipped" ? (
+                              <DirectionsRunIcon />
+                            ) : (
+                              <DoneIcon />
+                            )}
+                          </ListItemIcon>
+                          <ListItemText>
+                            {log.data.name} (ID: {log.data.id}) - Price:{" "}
+                            {log.data.price}, Quantity: {log.data.quantity} -{" "}
+                            {log.message}
+                          </ListItemText>
+                        </ListItem>
+                      );
+                    })}
+                  </List>
+                </Box>
+              )}
+            </Box>
+          ))
+            :
+            <Typography>No Ongoing Process</Typography>
+        }
       </Box>
       <Status />
     </Container>

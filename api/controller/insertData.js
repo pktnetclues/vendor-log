@@ -11,6 +11,15 @@ const insertData = async (req, res) => {
     var total_skipped = 0;
     var total_updated = 0;
 
+    const errorQuery = `INSERT INTO process_status (vendor_name, status, total_inserted, total_updated, total_skipped) VALUES (?,?,?,?,?)`
+    const errorReplacement = [
+      vendor_name,
+      "failed",
+      total_inserted,
+      total_updated,
+      total_skipped,
+    ]
+
     const filepath = path.resolve(
       __dirname,
       `../vendors/${vendor_name}/products.xlsx`
@@ -18,15 +27,9 @@ const insertData = async (req, res) => {
 
     if (!fs.existsSync(filepath)) {
       await sequelize.query(
-        `INSERT INTO process_status (vendor_name, status, total_inserted, total_updated, total_skipped) VALUES (?,?,?,?,?)`,
+        errorQuery,
         {
-          replacements: [
-            vendor_name,
-            "failed",
-            total_inserted,
-            total_updated,
-            total_skipped,
-          ],
+          replacements: errorReplacement,
           type: QueryTypes.INSERT,
         }
       );
@@ -39,15 +42,9 @@ const insertData = async (req, res) => {
 
     if (sheet.length === 0) {
       await sequelize.query(
-        `INSERT INTO process_status (vendor_name, status, total_inserted, total_updated, total_skipped) VALUES (?,?,?,?,?)`,
+        errorQuery,
         {
-          replacements: [
-            vendor_name,
-            "failed",
-            total_inserted,
-            total_updated,
-            total_skipped,
-          ],
+          replacements: errorReplacement,
           type: QueryTypes.INSERT,
         }
       );
@@ -114,7 +111,6 @@ const insertData = async (req, res) => {
             });
         } else {
           total_skipped = total_skipped + 1;
-
           res.write(
             `data: ${JSON.stringify({ message: "Skipped", data: row })}\n\n`
           );
@@ -139,16 +135,9 @@ const insertData = async (req, res) => {
 
     res.end();
   } catch (error) {
-    await sequelize.query(
-      `INSERT INTO process_status (vendor_name, status, total_inserted, total_updated, total_skipped) VALUES (?,?,?,?,?)`,
+    await sequelize.query(errorQuery,
       {
-        replacements: [
-          vendor_name,
-          "failed",
-          total_inserted,
-          total_updated,
-          total_skipped,
-        ],
+        replacements: errorReplacement,
         type: QueryTypes.INSERT,
       }
     );
@@ -156,5 +145,7 @@ const insertData = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
+
 
 module.exports = insertData;

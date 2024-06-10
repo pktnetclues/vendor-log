@@ -1,11 +1,11 @@
 export const styles = {
   container: {
-    padding: "10px",
-    backgroundColor: "#f5f5f5",
+    // padding: "10px",
+    // backgroundColor: "#f5f5f5",
     // margin: "20px 0",
     width: "500px",
   },
-  successTitle: { color: "#008000", marginBottom: "10px", fontSize: "20px" },
+  successTitle: { color: "#008000", fontSize: "20px" },
   errorTitle: { color: "#ff0000", marginTop: "30px", marginBottom: "20px" },
   list: {
     flex: 1,
