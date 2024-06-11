@@ -22,9 +22,8 @@ import { logMessage } from "../types";
 import { toast } from "sonner";
 import { v4 as uuid } from "uuid";
 
-
 const Vendors = () => {
-  const uniqueId: string = uuid().slice(0, 3)
+  const uniqueId: string = uuid().slice(0, 3);
   const [vendors, setVendors] = useState<Array<string>>([]);
   const [selectedVendor, setSelectedVendor] = useState<string>("");
   const [vendorLogs, setVendorLogs] = useState<
@@ -68,17 +67,20 @@ const Vendors = () => {
       eventSource.onopen = () => {
         eventSourcesRef.current[vendorName] = eventSource;
         setOngoingProcesses((prev) => [...prev, `${uniqueId}-${vendorName}`]);
-        toast.success(`Process Started for ${vendorName}`)
-      }
+        toast.success(`Process Started for ${vendorName}`);
+      };
 
       eventSource.onmessage = (event) => {
         const newLog = JSON.parse(event.data);
 
         setVendorLogs((prevLogs) => ({
           ...prevLogs,
-          [`${uniqueId}-${vendorName}`]: [...(prevLogs[`${uniqueId}-${vendorName}`] || []), newLog],
+          [`${uniqueId}-${vendorName}`]: [
+            ...(prevLogs[`${uniqueId}-${vendorName}`] || []),
+            newLog,
+          ],
         }));
-      }
+      };
 
       eventSource.onerror = (error) => {
         console.error("EventSource error:", error);
@@ -86,9 +88,6 @@ const Vendors = () => {
         delete eventSourcesRef.current[vendorName];
         toast.success(`Process Completed for ${vendorName}`);
       };
-
-
-
     } catch (error) {
       console.log("Error:", error);
     }
@@ -97,7 +96,6 @@ const Vendors = () => {
   const toggleVendorLogsVisibility = (vendorName: string) => {
     setVisibleVendorLogs((prev) => (prev === vendorName ? null : vendorName));
   };
-
 
   return (
     <Container
@@ -152,8 +150,8 @@ const Vendors = () => {
           </Box>
         </form>
 
-        {
-          ongoingProcesses.length > 0 ? ongoingProcesses.map((vendor, index: number) => (
+        {ongoingProcesses.length > 0 ? (
+          ongoingProcesses.map((vendor, index: number) => (
             <Box
               key={index}
               sx={{
@@ -192,8 +190,8 @@ const Vendors = () => {
                         log.message === "Updated"
                           ? "#FFD0D0"
                           : log.message === "Skipped"
-                            ? "#9AC8CD"
-                            : "#D9EAD3";
+                          ? "#9AC8CD"
+                          : "#D9EAD3";
 
                       return (
                         <ListItem
@@ -226,9 +224,9 @@ const Vendors = () => {
               )}
             </Box>
           ))
-            :
-            <Typography>No Ongoing Process</Typography>
-        }
+        ) : (
+          <Typography>No Ongoing Process</Typography>
+        )}
       </Box>
       <Status />
     </Container>
