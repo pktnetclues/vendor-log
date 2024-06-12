@@ -174,53 +174,46 @@ const Vendors = () => {
                 </Button>
               </Box>
               {visibleVendorLogs === vendor && (
-                <Box
-                  sx={{
-                    overflowY: "auto",
+                <div
+                  style={{
                     maxHeight: "40vh",
-                    width: "100%",
-                    display: "flex",
-                    flexDirection: "column",
-                    padding: 1,
+                    overflowY: "auto",
+                    padding: "8px",
+                    backgroundColor: "#f0f0f0",
+                    borderRadius: "4px",
                   }}
                 >
-                  <List>
-                    {vendorLogs[vendor]?.map((log) => {
-                      const logColor =
-                        log.message === "Updated"
-                          ? "#FFD0D0"
-                          : log.message === "Skipped"
-                          ? "#9AC8CD"
-                          : "#D9EAD3";
+                  {vendorLogs[vendor]?.map((log, index) => {
+                    const logColor =
+                      log.message === "Updated"
+                        ? "#f0b7b7"
+                        : log.message === "Skipped"
+                        ? "#b7d3d6"
+                        : "#c8e4c8";
 
-                      return (
-                        <ListItem
-                          sx={{
-                            backgroundColor: logColor,
-                            display: "flex",
-                            alignItems: "center",
-                          }}
-                          key={log?.data.id}
+                    return (
+                      <div
+                        key={index}
+                        style={{
+                          marginBottom: "8px",
+                          padding: "5px",
+                          backgroundColor: logColor,
+                          borderRadius: "4px",
+                        }}
+                      >
+                        <span
+                          style={{ fontWeight: "bold", marginRight: "8px" }}
                         >
-                          <ListItemIcon>
-                            {log.message === "Updated" ? (
-                              <EditIcon />
-                            ) : log.message === "Skipped" ? (
-                              <DirectionsRunIcon />
-                            ) : (
-                              <DoneIcon />
-                            )}
-                          </ListItemIcon>
-                          <ListItemText>
-                            {log.data.name} (ID: {log.data.id}) - Price:{" "}
-                            {log.data.price}, Quantity: {log.data.quantity} -{" "}
-                            {log.message}
-                          </ListItemText>
-                        </ListItem>
-                      );
-                    })}
-                  </List>
-                </Box>
+                          {log.message} :
+                        </span>
+                        <span>
+                          {log.data.name} (ID: {log.data.id}) - Price:{" "}
+                          {log.data.price}, Quantity: {log.data.quantity}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
               )}
             </Box>
           ))
