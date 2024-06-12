@@ -12,11 +12,9 @@ import {
   Button,
   ListItemIcon,
   Typography,
+  SelectChangeEvent,
 } from "@mui/material";
 import React, { useEffect, useRef, useState } from "react";
-import DoneIcon from "@mui/icons-material/Done";
-import EditIcon from "@mui/icons-material/Edit";
-import DirectionsRunIcon from "@mui/icons-material/DirectionsRun";
 import Status from "./Status";
 import { logMessage } from "../types";
 import { toast } from "sonner";
@@ -124,7 +122,7 @@ const Vendors = () => {
                 id="vendor"
                 value={selectedVendor}
                 label="Vendor"
-                onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                onChange={(e: SelectChangeEvent) =>
                   setSelectedVendor(e.target.value)
                 }
                 size="medium"

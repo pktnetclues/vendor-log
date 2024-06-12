@@ -6,7 +6,8 @@ const cluster = require("cluster");
 const noOfCpus = require("os").availableParallelism();
 
 /* 
-Create the multiple cluster using cluster module of nodejs based of no of cpu available in server machine
+Create the multiple cluster using cluster module of nodejs
+based on no of cpu available in server machine
 */
 
 if (cluster.isMaster) {
